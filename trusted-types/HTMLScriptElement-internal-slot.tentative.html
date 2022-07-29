@@ -45,6 +45,32 @@
       });
     });
   }, "Test TT application when manipulating <script> elements during loading.");
+
+  // Test that a script set via textContent actually executes (and not only
+  // doesn't throw an exception, which it wouldn't do due to the "internal slot"
+  // mechanism).
+  const policy = trustedTypes.createPolicy("testpolicy",
+                                           { createScript: x => x});
+  promise_test(t => {
+    const s = document.createElement("script");
+    document.body.appendChild(s);
+    s.textContent = policy.createScript("window.postMessage('hello');");
+    return new Promise(resolve => {
+      window.addEventListener("message", e => {
+        if (e.data == "hello") resolve();
+      });
+    });
+  }, "Script set via .textContent executes on a connected HTMLScriptElement.");
+  promise_test(t => {
+    const s = document.createElement("script");
+    s.textContent = policy.createScript("window.postMessage('world');");
+    document.body.appendChild(s);
+    return new Promise(resolve => {
+      window.addEventListener("message", e => {
+        if (e.data == "world") resolve();
+      });
+    });
+  }, "Script set via .textContent executes on an unconnected HTMLScriptElement.");
 </script>
 </body>
 </html>
